@@ -1,26 +1,36 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import * as React from "react";
+import { Switch, Route, BrowserRouter, Link } from "react-router-dom";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import Sudoku from "./modules/Sudoku";
+import Snake from "./modules/Snake";
+import { Header } from "./App.styles";
+
+class App extends React.Component {
+  render() {
+    return (
+      <BrowserRouter>
+        <Header>
+          <Link to="/sudoku" className="link">
+            Sudoku
+          </Link>
+          <Link to="/snake" className="link">
+            Snake
+          </Link>
+        </Header>
+        <Switch>
+          <Route path="/" exact>
+            Default
+          </Route>
+          <Route path="/sudoku">
+            <Sudoku />
+          </Route>
+          <Route path="/snake">
+            <Snake />
+          </Route>
+        </Switch>
+      </BrowserRouter>
+    );
+  }
 }
 
 export default App;
