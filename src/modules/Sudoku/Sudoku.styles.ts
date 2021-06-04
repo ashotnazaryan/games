@@ -23,30 +23,23 @@ export const Board = styled.div.attrs(props => ({
 
   .cell {
     border: none;
-    border-color: none;
-    border-image: none;
-    border-style: none;
     box-shadow: 0px 0px 3px #aaa;
     font-size: 35px;
     padding: 14px;
     box-sizing: border-box;
 
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
+    // &::-webkit-outer-spin-button,
+    // &::-webkit-inner-spin-button {
+    //   -webkit-appearance: none;
+    //   margin: 0;
+    // }
 
-    &[type=number] {
-      -moz-appearance: textfield;
-    }
+    // &[type=number] {
+    //   -moz-appearance: textfield;
+    // }
 
     &:focus-visible {
       outline: none;
-    }
-
-    &:disabled {
-      border: none;
     }
   }
 `;

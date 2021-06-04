@@ -88,7 +88,6 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
 
   private initGame = (): void => {
     const { complexity } = this.state;
-    // let updatedBoard: Cell[][] = this.board;
 
     switch (complexity) {
       case ComplexityTypes.easy: // 7/9
@@ -106,11 +105,6 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
       default:
         break;
     }
-
-    // this.setState({ ...this.state, board: updatedBoard }, () =>
-    //   console.log("BOARD: ", this.state.board)
-    // );
-    // this.setState((state) => ({ ...state, board: updatedBoard }));
   };
 
   private handleSelectChange = (
@@ -211,51 +205,39 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
       const randomRow = this.generateRandomNumbers(complexity);
       const randomIndexes: number[] = [];
 
-      return rows.map((cell, cellIndex) => {
+      return rows.map((cell, cellIndex, selfRow) => {
+        const self = JSON.parse(JSON.stringify(selfBoard));
         const randomIndex = this.generateRandomNumber(0, 8, randomIndexes);
+        const randomValue = randomRow[randomIndex];
+        const horizontal = this.getHorizontalCells(self, cell.y);
+        const vertical = this.getVerticalCells(self, cell.x);
+        const section = this.getSectionCells(
+          self,
+          cell.sectionRowIndex,
+          cell.sectionColumnIndex
+        );
+        const availableInHorizaontal = horizontal.some(
+          ({ value }) => value === randomValue
+        );
+        const availableInVertical = vertical.some(
+          ({ value }) => value === randomValue
+        );
+        const availableInSection = section.some(
+          ({ value }) => value === randomValue
+        );
+        const updatedCell =
+          availableInHorizaontal || availableInVertical || availableInSection
+            ? cell
+            : {
+                ...cell,
+                value: randomValue,
+                disabled: !!randomValue,
+              };
 
         randomIndexes.push(randomIndex);
+        self[rowIndex][randomIndex] = updatedCell;
 
-        return {
-          ...cell,
-          value: randomRow[randomIndex],
-          disabled: !!randomRow[randomIndex],
-        };
-
-        // return rows.map((cell, cellIndex) => {
-        //   const randomIndex = this.generateRandomNumber(0, 8);
-        //   const randomValue = `${randomRow[randomIndex]}`;
-        //   const horizontal = this.getHorizontalCells(selfBoard, cell.y);
-        //   const vertical = this.getVerticalCells(selfBoard, cell.x);
-        //   const section = this.getSectionCells(
-        //     selfBoard,
-        //     cell.sectionRowIndex,
-        //     cell.sectionColumnIndex
-        //   );
-        //   const availableInHorizaontal = horizontal.some(
-        //     (item) => item.value === randomValue
-        //   );
-        //   const availableInVertical = vertical.some(
-        //     (item) => item.value === randomValue
-        //   );
-        //   const availableInSection = section.some(
-        //     (item) => item.value === randomValue
-        //   );
-
-        //   if (
-        //     availableInHorizaontal ||
-        //     availableInVertical ||
-        //     availableInSection
-        //   ) {
-        //     return cell;
-        //   }
-
-        //   return {
-        //     ...cell,
-        //     value: `${randomValue}`,
-        //     disabled: true,
-        //   };
-        // });
+        return updatedCell;
       });
     });
 
@@ -284,10 +266,12 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
                 type="text"
                 autoComplete="off"
                 className="cell"
+                // TODO move styles to separate method
                 style={{
                   borderRight: cell.x % 3 === 2 ? "2px solid #666" : "none",
                   borderBottom: cell.y % 3 === 2 ? "2px solid #666" : "none",
                   color: cell.disabled ? "#666" : "#000",
+                  backgroundColor: cell.disabled ? "#eee" : "#fff",
                 }}
                 id={cell.id}
                 key={cell.id}
