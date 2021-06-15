@@ -5,68 +5,24 @@ import {
   Complexity as ComplexityStyle,
   Board,
 } from "./Sudoku.styles";
+import { CellItem, Complexity } from "./models";
+import { ComplexityTypes, complexityLabels, boardSize } from "./constants";
+import { createEmptyBoard } from "../../shared/utils";
+import { Cell } from "./components/Cell";
 
 interface SudokuState {
   complexity: ComplexityTypes;
-  board: Cell[][];
+  board: CellItem[][];
 }
 
 interface SudokuProps {}
 
-// TODO move to separate model file
-interface Cell {
-  x: number;
-  y: number;
-  id: string;
-  value: string;
-  sectionRowIndex: number;
-  sectionColumnIndex: number;
-  disabled?: boolean;
-}
-
-interface Complexity {
-  key: string;
-  label: string;
-}
-
-// TODO move to separate constant file
-enum ComplexityTypes {
-  easy = "easy",
-  normal = "normal",
-  hard = "hard",
-}
-
-const complexityLabels: { [key: string]: string } = {
-  [ComplexityTypes.easy]: "Easy",
-  [ComplexityTypes.normal]: "Normal",
-  [ComplexityTypes.hard]: "Hard",
-};
-
-const boardSize = 9;
-
-const boardItems = (): Cell[][] => {
-  const items = new Array(boardSize);
-
-  for (let i = 0; i < boardSize; i++) {
-    items[i] = new Array(boardSize);
-
-    for (let j = 0; j < boardSize; j++) {
-      items[i][j] = {
-        x: j,
-        y: i,
-        id: `${j}${i}`,
-        sectionRowIndex: Math.floor(i / 3),
-        sectionColumnIndex: Math.floor(j / 3),
-        value: "",
-      };
-    }
-  }
-
-  return items;
+const boardItems = (): CellItem[][] => {
+  return createEmptyBoard(boardSize);
 };
 
 class Sudoku extends React.Component<SudokuProps, SudokuState> {
-  private get board(): Cell[][] {
+  private get board(): CellItem[][] {
     return boardItems();
   }
 
@@ -76,6 +32,8 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
       label: complexityLabels[key],
     }));
   }
+
+  private counter = 0;
 
   state: SudokuState = {
     complexity: ComplexityTypes.normal,
@@ -118,7 +76,7 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
   };
 
   private handleInputChange =
-    (cell: Cell) =>
+    (cell: CellItem) =>
     (event: React.ChangeEvent<HTMLInputElement>): void => {
       const value = event.target.value.charAt(event.target.value.length - 1);
       const isPositiveNumber = /^\d*[1-9]\d*$/.test(value);
@@ -138,18 +96,19 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
       this.setState((state) => ({ ...state, board: updatedBoard }));
     };
 
-  private generateRandomNumber = (
+  private generateRandomUniqueNumber = (
     min: number = 1,
     max: number = 9,
     omitArr: number[] = []
   ): number => {
+    this.counter++;
     const randomNumber =
       Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min) + 1)) +
       Math.ceil(min);
     const existedRandomNumber = omitArr.some((item) => item === randomNumber);
 
-    if (existedRandomNumber) {
-      return this.generateRandomNumber(min, max, omitArr);
+    if (existedRandomNumber && this.counter < 3000) {
+      return this.generateRandomUniqueNumber(min, max, omitArr);
     }
 
     return randomNumber;
@@ -161,10 +120,10 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
     arr: string[] = []
   ): string[] => {
     while (arr.length < quantity) {
-      const randomValue = `${Math.floor(Math.random() * max) + 1}`;
+      const randomNumber = `${Math.floor(Math.random() * max) + 1}`;
 
-      if (!arr.includes(randomValue)) {
-        arr.push(randomValue);
+      if (!arr.includes(randomNumber)) {
+        arr.push(randomNumber);
       }
     }
 
@@ -175,19 +134,19 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
     return arr;
   };
 
-  private getHorizontalCells = (board: Cell[][], y: number): Cell[] => {
+  private getHorizontalCells = (board: CellItem[][], y: number): CellItem[] => {
     return board[y];
   };
 
-  private getVerticalCells = (board: Cell[][], x: number): Cell[] => {
+  private getVerticalCells = (board: CellItem[][], x: number): CellItem[] => {
     return board.map((rows) => rows.filter((cell) => cell.x === x)[0]);
   };
 
   private getSectionCells = (
-    board: Cell[][],
+    board: CellItem[][],
     sectionRowIndex: number,
     sectionColumnIndex: number
-  ): Cell[] => {
+  ): CellItem[] => {
     return board
       .filter(
         (rows, rowIndex) =>
@@ -201,48 +160,45 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
 
   private fillBoard = (complexity = 7) => {
     const { board } = this.state;
-    const updatedBoard = board.map((rows, rowIndex, selfBoard) => {
-      const randomRow = this.generateRandomNumbers(complexity);
-      const randomIndexes: number[] = [];
-
-      return rows.map((cell, cellIndex, selfRow) => {
-        const self = JSON.parse(JSON.stringify(selfBoard));
-        const randomIndex = this.generateRandomNumber(0, 8, randomIndexes);
-        const randomValue = randomRow[randomIndex];
-        const horizontal = this.getHorizontalCells(self, cell.y);
-        const vertical = this.getVerticalCells(self, cell.x);
+    const self: CellItem[][] = JSON.parse(JSON.stringify(board));
+    const emptyBoard = board.map((rows) =>
+      rows.map((cell) => ({
+        ...cell,
+        value: "",
+      }))
+    );
+    // FIXME wrong algorithm
+    const updatedBoard = emptyBoard.map((rows, rowIndex) => {
+      return rows.map((cell, cellIndex) => {
+        const horizontal = this.getHorizontalCells(self, cell.y).map(
+          ({ value }) => Number(value)
+        );
+        const vertical = this.getVerticalCells(self, cell.x).map(({ value }) =>
+          Number(value)
+        );
         const section = this.getSectionCells(
           self,
           cell.sectionRowIndex,
           cell.sectionColumnIndex
-        );
-        const availableInHorizaontal = horizontal.some(
-          ({ value }) => value === randomValue
-        );
-        const availableInVertical = vertical.some(
-          ({ value }) => value === randomValue
-        );
-        const availableInSection = section.some(
-          ({ value }) => value === randomValue
-        );
-        const updatedCell =
-          availableInHorizaontal || availableInVertical || availableInSection
-            ? cell
-            : {
-                ...cell,
-                value: randomValue,
-                disabled: !!randomValue,
-              };
+        ).map(({ value }) => Number(value));
+        const randomValue = `${this.generateRandomUniqueNumber(1, 9, [
+          ...horizontal,
+          ...vertical,
+          ...section,
+        ])}`;
+        const updatedCell = {
+          ...cell,
+          value: randomValue,
+          disabled: !!randomValue,
+        };
 
-        randomIndexes.push(randomIndex);
-        self[rowIndex][randomIndex] = updatedCell;
+        self[rowIndex][cellIndex] = updatedCell;
 
         return updatedCell;
       });
     });
 
     this.setState((state) => ({ ...state, board: updatedBoard }));
-    console.log("Updated board: ", updatedBoard);
   };
 
   render() {
@@ -261,23 +217,10 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
         <Board id={`${boardSize}`}>
           {board.map((rows) =>
             rows.map((cell) => (
-              // TODO move to a separate Cell component
-              <input
-                type="text"
-                autoComplete="off"
-                className="cell"
-                // TODO move styles to separate method
-                style={{
-                  borderRight: cell.x % 3 === 2 ? "2px solid #666" : "none",
-                  borderBottom: cell.y % 3 === 2 ? "2px solid #666" : "none",
-                  color: cell.disabled ? "#666" : "#000",
-                  backgroundColor: cell.disabled ? "#eee" : "#fff",
-                }}
-                id={cell.id}
+              <Cell
                 key={cell.id}
-                value={cell.value}
-                disabled={cell.disabled}
-                onChange={this.handleInputChange(cell)}
+                cell={cell}
+                onInputChange={this.handleInputChange}
               />
             ))
           )}
