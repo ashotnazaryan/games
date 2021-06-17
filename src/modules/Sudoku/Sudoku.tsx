@@ -1,14 +1,15 @@
 import * as React from "react";
 
+import { createEmptyBoard } from "shared/utils";
+import { Cell } from "modules/Sudoku/components/Cell";
+import { CellItem, Complexity } from "./models";
+import { ComplexityTypes, complexityLabels, boardSize } from "./constants";
+
 import {
   Container,
   Complexity as ComplexityStyle,
   Board,
 } from "./Sudoku.styles";
-import { CellItem, Complexity } from "./models";
-import { ComplexityTypes, complexityLabels, boardSize } from "./constants";
-import { createEmptyBoard } from "../../shared/utils";
-import { Cell } from "./components/Cell";
 
 interface SudokuState {
   complexity: ComplexityTypes;
@@ -17,13 +18,9 @@ interface SudokuState {
 
 interface SudokuProps {}
 
-const boardItems = (): CellItem[][] => {
-  return createEmptyBoard(boardSize);
-};
-
 class Sudoku extends React.Component<SudokuProps, SudokuState> {
   private get board(): CellItem[][] {
-    return boardItems();
+    return createEmptyBoard(boardSize);
   }
 
   private get complexities(): Complexity[] {
@@ -61,6 +58,7 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
         break;
 
       default:
+        this.fillBoard(6);
         break;
     }
   };
@@ -76,9 +74,9 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
   };
 
   private handleInputChange =
-    (cell: CellItem) =>
+    ({ id }: CellItem) =>
     (event: React.ChangeEvent<HTMLInputElement>): void => {
-      const value = event.target.value.charAt(event.target.value.length - 1);
+      const value = event.target.value?.charAt(event.target.value.length - 1);
       const isPositiveNumber = /^\d*[1-9]\d*$/.test(value);
 
       if (value && !isPositiveNumber) {
@@ -89,7 +87,7 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
       const updatedBoard = board.map((rows) =>
         rows.map((item) => ({
           ...item,
-          value: cell.id === item.id ? value : item.value,
+          value: id === item.id ? value : item.value,
         }))
       );
 
@@ -107,6 +105,7 @@ class Sudoku extends React.Component<SudokuProps, SudokuState> {
       Math.ceil(min);
     const existedRandomNumber = omitArr.some((item) => item === randomNumber);
 
+    // FIXME, 'this.counter < 3000' is for avoiding the infinite loop
     if (existedRandomNumber && this.counter < 3000) {
       return this.generateRandomUniqueNumber(min, max, omitArr);
     }

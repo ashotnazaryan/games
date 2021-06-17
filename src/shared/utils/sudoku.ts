@@ -1,4 +1,4 @@
-import { CellItem } from "../../modules/Sudoku/models";
+import { CellItem } from "modules/Sudoku/models";
 
 export const createEmptyBoard = (boardSize: number): CellItem[][] => {
   const items = new Array(boardSize);

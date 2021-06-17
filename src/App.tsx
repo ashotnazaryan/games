@@ -3,6 +3,7 @@ import { Switch, Route, BrowserRouter, Link } from "react-router-dom";
 
 import Sudoku from "./modules/Sudoku";
 import Snake from "./modules/Snake";
+
 import { Header } from "./App.styles";
 
 class App extends React.Component {
