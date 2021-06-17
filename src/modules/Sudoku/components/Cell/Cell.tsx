@@ -3,11 +3,13 @@ import { CellItem } from "../../models";
 
 interface CellProps {
   cell: CellItem;
-  onInputChange: (cell: CellItem) => (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onInputChange: (
+    cell: CellItem
+  ) => (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const Cell: React.FC<CellProps> = (props) => {
-  const { cell, onInputChange = () => () => {} } = props;
+  const { cell, onInputChange } = props;
 
   const getStyles = (cell: CellItem) => {
     return {
@@ -15,8 +17,8 @@ export const Cell: React.FC<CellProps> = (props) => {
       borderBottom: cell.y % 3 === 2 ? "2px solid #666" : "none",
       color: cell.disabled ? "#666" : "#000",
       backgroundColor: cell.disabled ? "#eee" : "#fff",
-    }
-  }
+    };
+  };
 
   return (
     <input
